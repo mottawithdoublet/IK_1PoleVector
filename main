@@ -1,0 +1,97 @@
+#IK_1PoleVector
+import maya.cmds as pm
+sel = pm.ls(sl=True)
+
+jointStart1 = sel[3] #upper
+jointEnd1 = sel[1]
+jointStart2 = sel[2] #lower
+jointEnd2 = sel[0]
+
+name1 = jointStart2 #upper
+name_List1 = name1.split('_')
+
+name2 = jointEnd1 #lower
+name_List2 = name2.split('_')
+
+print name_List2
+
+footName = name_List1[0]+ "_"+ name_List1[1]+"_Foot_Ctrl_Old"
+hipName = name_List1[0]+ "_"+ name_List1[1]+"_Hip_Ctrl"
+
+name_ikHandle1=name_List1[0]+'_'+name_List1[1]+'_ShoulderSystem_IK' #upper
+name_ikHandle2=name_List2[0]+'_'+name_List2[1]+'_'+name_List2[2]+'_IK' #lower
+
+ikHandleLeftRearLower=cmds.ikHandle(n=name_ikHandle1,sj= jointStart1, ee=jointStart2,sol='ikSCsolver') #lower chain
+ikHandleLeftRearUpper=cmds.ikHandle(n=name_ikHandle2,sj= jointStart2, ee=jointEnd2,sol='ikRPsolver') #upper chain
+
+TRAFoot= cmds.xform(jointEnd2,ws=True, q=True, t=True)
+ROTFoot= cmds.xform(jointEnd2,ws=True, q=True, ro=True)
+
+TRAje2= cmds.xform(jointEnd1,ws=True, q=True, t=True)
+ROTje2= cmds.xform(jointEnd1,ws=True, q=True, ro=True)
+
+TRAjs2= cmds.xform(jointStart2,ws=True, q=True, t=True)
+ROTjs2= cmds.xform(jointStart2,ws=True, q=True, ro=True)
+
+TRAjs1= cmds.xform(jointStart1,ws=True, q=True, t=True)
+ROTjs1= cmds.xform(jointStart1,ws=True, q=True, ro=True)
+
+js1_Ctrl = cmds.circle (n= name_ikHandle1 + "_Ctrl", ch=False, nr=(1,0,0), r=2)
+cmds.select(js1_Ctrl)
+js1_Ctrl_Drv= cmds.group (n= name_ikHandle1 + "_drv")
+js1_Ctrl_Grp= cmds.group (n= name_ikHandle1 +  "_grp")
+
+je2_Ctrl = cmds.circle (n= name_ikHandle2 + "_Ctrl", ch=False, nr=(1,0,0), r=2)
+cmds.select(je2_Ctrl)
+je2_Ctrl_Drv= cmds.group (n=name_ikHandle2+"_drv")
+je2_Ctrl_Grp= cmds.group (n=name_ikHandle2+"_grp")
+
+#taken from Toolkit
+hip_Ctrl = mel.eval('$c = `curve -d 1 -p 0 3 0 -p 0 2 -2 -p 0 0 -3 -p 0 -2 -2 -p 0 -3 0 -p 0 -2 2 '
+                           '-p 0 0 3 -p 0 2 2 -p 0 3 0 -p 2 2 0 -p 3 0 0 -p 2 -2 0 -p 0 -3 0 -p -2 -2 0 '
+                           '-p -3 0 0 -p -2 2 0 -p 0 3 0 -k 0 -k 1 -k 2 -k 3 -k 4 -k 5 -k 6 -k 7 -k 8 '
+                           '-k 9 -k 10 -k 11 -k 12 -k 13 -k 14 -k 15 -k 16 -n "sphere#"`;')        
+hip_Ctrl=cmds.rename(hipName)                                       
+hip_Ctrl_Drv= cmds.group (n=hipName+"_drv")
+hip_Ctrl_Grp= cmds.group (n=hipName+"_grp") 
+
+foot_Ctrl = mel.eval("$zmienna = `curve -d 1 -p 0.5 0.5 -0.5 -p -0.5 0.5 -0.5 "
+                          "-p -0.5 0.5 0.5 -p 0.5 0.5 0.5 -p 0.5 0.5 -0.5 -p 0.5 -0.5 "
+                          "-0.5 -p 0.5 -0.5 0.5 -p 0.5 0.5 0.5 -p -0.5 0.5 0.5 -p -0.5 "
+                          "-0.5 0.5 -p -0.5 -0.5 -0.5 -p -0.5 0.5 -0.5 -p 0.5 0.5 -0.5 "
+                          "-p 0.5 -0.5 -0.5 -p -0.5 -0.5 -0.5 -p -0.5 -0.5 0.5 -p 0.5 "
+                          "-0.5 0.5 -k 0 -k 1 -k 2 -k 3 -k 4 -k 5 -k 6 -k 7 -k 8 -k 9 "
+                          "-k 10 -k 11 -k 12 -k 13 -k 14 -k 15 -k 16 `;")
+foot_Ctrl=cmds.rename(footName)
+cmds.select(foot_Ctrl)
+cmds.addAttr(sn='ssr', ln='ShoulderSystemRatio', nn='Shoulder System Ratio', dv=.25, min=0.000 , max=1.000, k=True)
+#cmds.addAttr(sn='kb', ln='KneeBendRatio', nn='Knee Bend Ratio', min=0.000 , max=1.000, dv=2.5, k=True)
+foot_Ctrl_Drv= cmds.group (n=foot_Ctrl+"_drv")
+foot_Ctrl_Grp= cmds.group (n=foot_Ctrl+"_grp") 
+                       
+cmds.xform (hip_Ctrl_Grp, ws=True, t=TRAjs1)
+cmds.xform (foot_Ctrl_Grp, ws=True, t=TRAFoot)
+cmds.xform (js1_Ctrl_Grp, ws=True, t=TRAjs2)
+cmds.xform (je2_Ctrl_Grp, ws=True, t=TRAje2)
+
+#cmds.move(hip_Ctrl_Grp, y=True)
+#cmds.move(3, js1_Ctrl_Grp, z=True)
+cmds.move(-3, je2_Ctrl_Grp, z=True)
+
+cmds.pointConstraint(hip_Ctrl, jointStart1, mo=True)
+cmds.pointConstraint(js1_Ctrl,name_ikHandle1, mo=True)
+cmds.pointConstraint(foot_Ctrl,name_ikHandle2, mo=True)
+#cmds.poleVectorConstraint(js1_Ctrl,name_ikHandle1)
+cmds.poleVectorConstraint(je2_Ctrl,name_ikHandle2)
+#cmds.setKeyframe(name_ikHandle1,ib=True,at=('tx','ty','tz'))
+node_sr = cmds.shadingNode('setRange', asUtility=True, n= name_ikHandle1+'_setRange')
+node_md = cmds.shadingNode('multiplyDivide', asUtility=True, n= name_ikHandle1+'_multiplyDivide')
+cmds.connectAttr(foot_Ctrl+'.ShoulderSystemRatio',node_sr+'.valueX', f=True)
+cmds.connectAttr(foot_Ctrl+'.ShoulderSystemRatio',node_sr+'.valueY', f=True)
+cmds.connectAttr(foot_Ctrl+'.ShoulderSystemRatio',node_sr+'.valueZ', f=True)
+#Left_Front_ShoulderSystem_IK_multiplyDivide.output Left_Front_ShoulderSystem_IK_Ctrl.translate
+cmds.connectAttr(foot_Ctrl+'.translate',node_md+'.input1', f=True)
+cmds.connectAttr(node_sr+'.outValue',node_md+'.input2', f=True)
+cmds.connectAttr(node_md+'.output',name_ikHandle1 + '_Ctrl'+'.translate', f=True)
+
+cmds.parent(je2_Ctrl_Grp, js1_Ctrl)
